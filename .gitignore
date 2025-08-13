@@ -1,3 +1,8 @@
+# keys
+key.txt
+githubtoken.txt
+export_keys.sh
+
 # Python
 __pycache__/
 *.py[cod]
