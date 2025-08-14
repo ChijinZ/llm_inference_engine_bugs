@@ -9,11 +9,11 @@ without changing the main code.
 # List of repositories to analyze
 REPOSITORIES = [
     "ggerganov/llama.cpp",
-    # "vllm-project/vllm", 
-    # "microsoft/DeepSpeed",
-    # "mlc-ai/mlc-llm",
-    # "NVIDIA/TensorRT-LLM",
-    # "huggingface/text-generation-inference"
+    "vllm-project/vllm", 
+    "microsoft/DeepSpeed",
+    "mlc-ai/mlc-llm",
+    "NVIDIA/TensorRT-LLM",
+    "huggingface/text-generation-inference"
 ]
 
 # GitHub API configuration
@@ -26,18 +26,35 @@ GITHUB_CONFIG = {
     'retry_on_timeout': True,  # Whether to retry on timeout errors
 }
 
-# OpenAI API configuration
-OPENAI_CONFIG = {
-    'model': 'gpt-4o',  # Model to use for analysis
+# LLM API configuration
+LLM_CONFIG = {
+    'provider': 'openai',  # 'openai' or 'gemini'
+    'model': 'gpt-4.1-mini',  # Model to use for analysis
     'temperature': 0.1,  # Lower temperature for more consistent results
-    'max_tokens': 500,  # Maximum tokens in response
+    'max_tokens': 1000,  # Maximum tokens in response
+    'rate_limit_delay': 0.1,  # Delay between API calls (seconds)
+    'fallback_to_openai': True,  # Whether to fallback to OpenAI if Gemini fails
+    'max_gemini_errors': 5,  # Maximum consecutive Gemini errors before switching to OpenAI
+}
+
+# Performance monitoring configuration
+PERFORMANCE_CONFIG = {
+    'throughput_report_interval': 60,  # Report throughput every N seconds
+    'enable_eta_estimation': True,  # Whether to show ETA in throughput reports
+}
+
+# OpenAI API configuration (legacy, kept for compatibility)
+OPENAI_CONFIG = {
+    'model': 'gpt-4.1-mini',  # Model to use for analysis
+    'temperature': 0.1,  # Lower temperature for more consistent results
+    'max_tokens': 1000,  # Maximum tokens in response
     'rate_limit_delay': 0.1,  # Delay between API calls (seconds)
 }
 
 # Content processing configuration
 CONTENT_CONFIG = {
     'max_description_length': 2000,  # Maximum characters to send to OpenAI (legacy, now using intelligent truncation)
-    'max_body_length': 1000,  # Maximum characters to store in results
+    'max_body_length': 1400,  # Maximum characters to store in results
     'max_tokens_for_analysis': 6000,  # Maximum tokens to send to OpenAI for analysis
     'use_full_content': True,  # Whether to analyze full content or truncate
 }

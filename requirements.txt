@@ -1,3 +1,14 @@
-requests>=2.31.0
+# Core dependencies
+requests>=2.25.0
+
+# OpenAI support
 openai>=1.0.0
-python-dateutil>=2.8.2
+
+# Google Gemini support
+google-generativeai>=0.3.0
+
+# Required: for JSON schema validation
+jsonschema>=3.2.0
+
+# Optional: for better logging
+colorlog>=6.0.0
