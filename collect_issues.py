@@ -222,7 +222,7 @@ class LLMBugCollector:
         url = f"https://api.github.com/repos/{repo}/{item_type}"
         per_page = config.GITHUB_CONFIG['per_page']
         request_timeout = config.GITHUB_CONFIG['request_timeout']
-        max_retries = 10
+        max_retries = 4
         base_delay = config.GITHUB_CONFIG['base_retry_delay']
         
         params = {
@@ -301,6 +301,11 @@ class LLMBugCollector:
                     if response.status_code == 404:
                         logger.error(f"Repository {repo} not found or access denied")
                         return bugs, {'total': total_items, 'cached': cached_count, 'new': new_analysis_count, 'processed': processed_count}
+                    elif response.status_code == 422:
+                        logger.info(f"finish analysis in the {page} page")
+                        success = True
+                        items = []
+                        break
                     elif response.status_code == 403:
                         retry_count += 1
                         delay = base_delay * (2 ** retry_count)
