@@ -46,9 +46,9 @@ class GitHubAPIClient:
             })
             logger.warning("No GitHub token found - using unauthenticated requests (much slower)")
         
-        # Rate limiting settings
-        self.request_delay = 0.1 if self.github_token else 1.0  # Much faster with token
-        self.github_api_delay = 0.5 if self.github_token else 2.0  # Faster API calls with token
+        # Rate limiting settings - optimized delays
+        self.request_delay = 0.05 if self.github_token else 0.2  # Minimal delay for non-API requests
+        self.github_api_delay = 0.05 if self.github_token else 0.5  # Minimal delay for API requests
         
         # Rate limit tracking
         self.api_calls_made = 0
@@ -67,13 +67,13 @@ class GitHubAPIClient:
                 logger.info(f"Rate limit: {self.rate_limit_remaining} remaining, resets at {reset_time}")
     
     def wait_for_rate_limit(self):
-        """Wait if we're approaching rate limits"""
-        # Need more buffer since we make 2 API calls per issue (issue + timeline)
-        min_remaining = 20 if self.github_token else 5
+        """Wait if we're approaching rate limits - optimized thresholds"""
+        # Reduced buffer since we're tracking more accurately
+        min_remaining = 10 if self.github_token else 3
         if self.rate_limit_remaining < min_remaining and self.rate_limit_reset_time:
             current_time = datetime.now(timezone.utc).timestamp()
             if current_time < self.rate_limit_reset_time:
-                wait_time = self.rate_limit_reset_time - current_time + 10  # Add 10s buffer
+                wait_time = self.rate_limit_reset_time - current_time + 5  # Reduced buffer
                 logger.warning(f"Rate limit almost exhausted. Waiting {wait_time:.0f} seconds...")
                 time.sleep(wait_time)
                 self.rate_limit_remaining = 5000 if self.github_token else 60  # Reset counter
@@ -105,14 +105,10 @@ class GitHubAPIClient:
         while True:
             attempt += 1
             try:
-                # Check rate limit before making request
-                if self.rate_limit_remaining <= 5:
-                    logger.warning(f"Rate limit too low ({self.rate_limit_remaining}), waiting before retry {attempt}")
-                    time.sleep(60)  # Wait 1 minute
-                    continue
-                
+                # Single optimized rate limit check
                 self.wait_for_rate_limit()
-                time.sleep(self.github_api_delay)
+                if self.github_token:
+                    time.sleep(self.github_api_delay)  # Only minimal delay for authenticated requests
                 
                 response = self.session.get(api_url, timeout=30)
                 self.api_calls_made += 1
@@ -123,7 +119,7 @@ class GitHubAPIClient:
                 
                 elif response.status_code in [403, 429]:
                     # Rate limited - wait and retry indefinitely
-                    wait_time = min(attempt * 120, 3600)  # 2min, 4min, 6min... up to 1 hour max
+                    wait_time = min(attempt * 30, 300)  # 30s, 60s, 90s... up to 5 min max
                     logger.warning(f"Rate limited ({response.status_code}) for issue data, waiting {wait_time}s before retry {attempt}")
                     time.sleep(wait_time)
                     continue
@@ -224,14 +220,10 @@ class GitHubAPIClient:
         while True:
             attempt += 1
             try:
-                # Check rate limit before making request
-                if self.rate_limit_remaining <= 5:
-                    logger.warning(f"Rate limit too low ({self.rate_limit_remaining}), waiting before retry {attempt}")
-                    time.sleep(60)  # Wait 1 minute
-                    continue
-                
+                # Single optimized rate limit check
                 self.wait_for_rate_limit()
-                time.sleep(self.github_api_delay)
+                if self.github_token:
+                    time.sleep(self.github_api_delay)  # Only minimal delay for authenticated requests
                 
                 timeline_response = self.session.get(
                     timeline_url, 
@@ -259,7 +251,7 @@ class GitHubAPIClient:
                 
                 elif timeline_response.status_code in [403, 429]:
                     # Rate limited - wait and retry indefinitely
-                    wait_time = min(attempt * 120, 3600)  # 2min, 4min, 6min... up to 1 hour max
+                    wait_time = min(attempt * 30, 300)  # 30s, 60s, 90s... up to 5 min max
                     logger.warning(f"Rate limited ({timeline_response.status_code}) for timeline, waiting {wait_time}s before retry {attempt}")
                     time.sleep(wait_time)
                     continue
@@ -308,14 +300,10 @@ class GitHubAPIClient:
         while True:
             attempt += 1
             try:
-                # Check rate limit before making request
-                if self.rate_limit_remaining <= 5:
-                    logger.warning(f"Rate limit too low ({self.rate_limit_remaining}), waiting before retry {attempt}")
-                    time.sleep(60)  # Wait 1 minute
-                    continue
-                
+                # Single optimized rate limit check
                 self.wait_for_rate_limit()
-                time.sleep(self.github_api_delay)
+                if self.github_token:
+                    time.sleep(self.github_api_delay)  # Only minimal delay for authenticated requests
                 
                 response = self.session.get(url, headers=headers, timeout=30)
                 self.api_calls_made += 1
@@ -326,7 +314,7 @@ class GitHubAPIClient:
                 
                 elif response.status_code in [403, 429]:
                     # Rate limited - wait and retry indefinitely
-                    wait_time = min(attempt * 120, 3600)  # 2min, 4min, 6min... up to 1 hour max
+                    wait_time = min(attempt * 30, 300)  # 30s, 60s, 90s... up to 5 min max
                     logger.warning(f"Rate limited ({response.status_code}) for API request, waiting {wait_time}s before retry {attempt}")
                     time.sleep(wait_time)
                     continue
@@ -400,14 +388,10 @@ class GitHubAPIClient:
         while True:
             attempt += 1
             try:
-                # Check rate limit before making request
-                if self.rate_limit_remaining <= 5:
-                    logger.warning(f"Rate limit too low ({self.rate_limit_remaining}), waiting before retry {attempt}")
-                    time.sleep(60)  # Wait 1 minute
-                    continue
-                
+                # Single optimized rate limit check
                 self.wait_for_rate_limit()
-                time.sleep(self.github_api_delay)
+                if self.github_token:
+                    time.sleep(self.github_api_delay)  # Only minimal delay for authenticated requests
                 
                 response = self.session.get(api_url, timeout=30)
                 self.api_calls_made += 1
@@ -418,7 +402,7 @@ class GitHubAPIClient:
                 
                 elif response.status_code in [403, 429]:
                     # Rate limited - wait and retry indefinitely
-                    wait_time = min(attempt * 120, 3600)  # 2min, 4min, 6min... up to 1 hour max
+                    wait_time = min(attempt * 30, 300)  # 30s, 60s, 90s... up to 5 min max
                     logger.warning(f"Rate limited ({response.status_code}) for PR data, waiting {wait_time}s before retry {attempt}")
                     time.sleep(wait_time)
                     continue
@@ -452,7 +436,7 @@ class GitHubAPIClient:
                 logger.debug(f"Unexpected error fetching PR data: {e}")
                 return None
     
-    def get_pull_request_status(self, url: str) -> Dict[str, Any]:
+    def get_pull_request_status(self, url: str) -> str:
         """
         Get the status of a GitHub pull request
         
@@ -460,85 +444,108 @@ class GitHubAPIClient:
             url: The GitHub pull request URL (e.g., https://github.com/owner/repo/pull/123)
             
         Returns:
-            Dictionary containing:
-            - status: 'open', 'closed', or 'merged'
-            - state: The GitHub state (open/closed)
-            - merged: Boolean indicating if the PR was merged
-            - merged_at: Timestamp when merged (None if not merged)
-            - closed_at: Timestamp when closed (None if not closed)
-            - title: PR title
-            - number: PR number
-            - error: Error message if failed to fetch
+            String status: 'Open', 'Draft', 'Closed', 'Merged', or 'Other'
+            
+        Raises:
+            ValueError: If the URL is not a valid GitHub pull request URL
+            RuntimeError: If there's an error fetching the pull request data
         """
-        try:
-            parsed_url = urlparse(url)
+        parsed_url = urlparse(url)
+        
+        # Validate it's a GitHub pull request URL
+        if parsed_url.hostname != 'github.com':
+            error_msg = f"Not a GitHub URL: {url}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        if not self._is_github_pull_request_url(parsed_url):
+            error_msg = f"Not a GitHub pull request URL: {url}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        # Extract path parts
+        path_parts = self._extract_github_path_parts(parsed_url)
+        if not path_parts:
+            error_msg = f"Invalid GitHub URL format: {url}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        owner, repo, item_type, pr_number = path_parts
+        
+        # Fetch pull request data
+        data = self._fetch_github_pull_request_data(owner, repo, pr_number)
+        if not data:
+            error_msg = f"Failed to fetch pull request data for {url}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
+        
+        # Determine status based on GitHub's PR status values
+        state = data.get('state', 'unknown')
+        merged = data.get('merged', False)
+        draft = data.get('draft', False)
+        
+        if merged:
+            return 'Merged'
+        elif draft:
+            return 'Draft'
+        elif state == 'closed':
+            return 'Closed'
+        elif state == 'open':
+            return 'Open'
+        else:
+            # Only return 'Other' for unknown status values, not for errors
+            logger.warning(f"Unknown PR status: state={state}, merged={merged}, draft={draft} for {url}")
+            return 'Other'
+    
+    def get_pull_request_diff(self, url: str) -> str:
+        """
+        Get the diff content of a GitHub pull request
+        
+        Args:
+            url: The GitHub pull request URL (e.g., https://github.com/owner/repo/pull/123)
             
-            # Validate it's a GitHub pull request URL
-            if parsed_url.hostname != 'github.com':
-                return {
-                    'error': f"Not a GitHub URL: {url}",
-                    'status': 'unknown'
-                }
+        Returns:
+            String containing the diff content of the pull request
             
-            if not self._is_github_pull_request_url(parsed_url):
-                return {
-                    'error': f"Not a GitHub pull request URL: {url}",
-                    'status': 'unknown'
-                }
-            
-            # Extract path parts
-            path_parts = self._extract_github_path_parts(parsed_url)
-            if not path_parts:
-                return {
-                    'error': f"Invalid GitHub URL format: {url}",
-                    'status': 'unknown'
-                }
-            
-            owner, repo, item_type, pr_number = path_parts
-            
-            # Fetch pull request data
-            data = self._fetch_github_pull_request_data(owner, repo, pr_number)
-            if not data:
-                return {
-                    'error': f"Failed to fetch pull request data for {url}",
-                    'status': 'unknown'
-                }
-            
-            # Determine status
-            state = data.get('state', 'unknown')
-            merged = data.get('merged', False)
-            merged_at = data.get('merged_at')
-            closed_at = data.get('closed_at')
-            
-            if merged:
-                status = 'merged'
-            elif state == 'closed':
-                status = 'closed'
-            elif state == 'open':
-                status = 'open'
-            else:
-                status = 'unknown'
-            
-            return {
-                'status': status,
-                'state': state,
-                'merged': merged,
-                'merged_at': merged_at,
-                'closed_at': closed_at,
-                'title': data.get('title', ''),
-                'number': data.get('number'),
-                'created_at': data.get('created_at'),
-                'updated_at': data.get('updated_at'),
-                'user': data.get('user', {}).get('login') if data.get('user') else None,
-                'error': None
-            }
-            
-        except Exception as e:
-            logger.error(f"Unexpected error getting PR status for {url}: {e}")
-            return {
-                'error': f"Unexpected error: {str(e)}",
-                'status': 'unknown'
-            }
+        Raises:
+            ValueError: If the URL is not a valid GitHub pull request URL
+            RuntimeError: If there's an error fetching the pull request diff
+        """
+        parsed_url = urlparse(url)
+        
+        # Validate it's a GitHub pull request URL
+        if parsed_url.hostname != 'github.com':
+            error_msg = f"Not a GitHub URL: {url}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        if not self._is_github_pull_request_url(parsed_url):
+            error_msg = f"Not a GitHub pull request URL: {url}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        # Extract path parts
+        path_parts = self._extract_github_path_parts(parsed_url)
+        if not path_parts:
+            error_msg = f"Invalid GitHub URL format: {url}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        owner, repo, item_type, pr_number = path_parts
+        
+        # Fetch pull request diff using GitHub API
+        diff_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
+        
+        # Use the existing api_get method with Accept header for diff format
+        headers = {'Accept': 'application/vnd.github.diff'}
+        response = self.api_get(diff_url, headers=headers)
+        
+        if not response:
+            error_msg = f"Failed to fetch pull request diff for {url}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
+        
+        return response.text
     
     def fetch_url_content(self, url: str) -> str:
         """
