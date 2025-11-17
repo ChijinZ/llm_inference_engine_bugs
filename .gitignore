@@ -186,12 +186,12 @@ Thumbs.db
 *.old
 
 # Data files (if any)
-data/
-datasets/
-*.csv
-*.tsv
-*.json.gz
-*.json.bz2
+# data/
+# datasets/
+# *.csv
+# *.tsv
+# *.json.gz
+# *.json.bz2
 
 # Model files (if using any ML models)
 models/
